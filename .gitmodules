@@ -1,6 +1,6 @@
 [submodule "public"]
 	path = public
-	url = git@github.com:korporationcl/korporation.cl.github.io.git 
+	url = git@github.com:korporationcl/korporationcl.github.io.git 
 [submodule "themes/bare"]
 	path = themes/bare
 	url = https://github.com/orf/bare-hugo-theme.git

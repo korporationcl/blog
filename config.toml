@@ -2,7 +2,6 @@ baseURL = "https://www.korporation.cl/"
 languageCode = "en-us"
 title = "korporation"
 theme = "bare"
-publishDir = "korporationcl.github.io"
 
 [params]
 mainSections = ["posts"]
