@@ -1,4 +1,4 @@
 baseURL = "https://www.korporation.cl/"
 languageCode = "en-us"
 title = "korporation"
-theme = "ananke"
+theme = "changelog"
