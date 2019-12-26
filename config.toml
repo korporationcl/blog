@@ -1,4 +1,21 @@
 baseURL = "https://www.korporation.cl/"
 languageCode = "en-us"
 title = "korporation"
-theme = "changelog"
+theme = "bare"
+
+[params]
+mainSections = ["posts"]
+author = "Victor Vargas"
+email = "victor@korporation.cl"
+description = 'Linux Engineer'
+postcss = false 
+# Include the author name in the <title> of articles
+includeAuthorInTitle = true
+
+[[params.social]]
+icon = "github-circle"
+url = "https://github.com/korporationcl/"
+
+[[params.social]]
+icon = "linkedin"
+url = "https://www.linkedin.com/in/victorvargasb/"
