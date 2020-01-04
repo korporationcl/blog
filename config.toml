@@ -8,6 +8,7 @@ mainSections = ["posts"]
 author = "Victor Vargas"
 email = "victor@korporation.cl"
 description = 'Linux Engineer'
+googleAnalytics = "UA-155321193-1"
 postcss = false 
 # Include the author name in the <title> of articles
 includeAuthorInTitle = true

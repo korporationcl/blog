@@ -59,11 +59,23 @@ Brendan's book mentioned this briefly, and after getting that reference from [Pe
 >The designers of the Atlas computer at the University of Manchester invented virtual memory in the `1950s` to eliminate a looming programming problem: **planning** and **scheduling data** transfers between main and secondary memory and **recompiling** programs for each change of **size** of main memory.
 
 
-Imagine you were in the 1970s-1980s and processors like the `Intel 8080` only provided an address space of 64kbytes (you may have in your laptop at least `8192000` / `8GB` RAM), but back those days processors used direct physical memory address to access code and data. There is something in particular mentioned in the book, programmers had to arrange that the program code and data avoided any **holes** in the given address space. It is much convenient to ignore the physical layout of a machine's memory and work instead with an idealised or **virtual machine**. A program/process can then reference the virtual memory addresses for both code and data and a **hole** in memory can be ignored since the restrictions imposed by physical memory are invisible to both the program and programmer.
+Imagine you were in the 1970s-1980s and processors like the `Intel 8080` only provided an address space of 64kbytes (you may have in your laptop at least `8192000` / `8GB` RAM), but back those days processors used direct physical memory address to access code and data. There is something in particular mentioned in the book, programmers had to arrange that the program code and data avoided any **holes** in the given address space. It is much convenient to ignore the physical layout of a machine's memory and work instead with an idealised or **virtual machine**. A program/process can then reference the virtual memory addresses for both code and data and a **hole** in memory can be **ignored** since the restrictions imposed by physical memory are **invisible** to both the program and programmer.
 
 >A virtual address schema gives the illussion that there is more memory available than is physically installed in the machine. This allows the OS to run a program that is larger than physical memory, however a program reside in physical memory and it must generate real addresses for both its code and data. Therefore, a **translation** mecanism is needed to convert virtual memory to physical memory addresses at run time and must not provide any significant overhead.
 
-From this previous quote, it is referring to the [Translation Lookaside Buffer](https://en.wikipedia.org/wiki/Translation_lookaside_buffer) or **TLB**, which is normally implemented on the Memory Management Unit or **MMU**.
+From the previous quote, it is referring to the Memory Management Unit / **MMU**. [Translation Lookaside Buffer](https://en.wikipedia.org/wiki/Translation_lookaside_buffer) or **TLB**, is a memory cache use to reduce the time taken to access a memory location and it stores the recent translations of virtual memory to physical memory.
+
+A process address space has its own virtual address space, which of course is mapped to physical memory by the operating system (main memory and swap, if exists). Another important definition to remember is a `page`. A page is a unit of memory, historically has been `4kb` or `8kb` but depends of the architecture, and its how the physical memory has been divided (also known as `page frames`). The selection of the size is defined when the kernel is built. On the latest Ubuntu `18.04.3` release the page size is still set to `4k`:
+
+```bash
+$root@testing:~# uname -r
+4.15.0-72-generic
+
+$root@testing:~# getconf PAGE_SIZE
+4096
+```
+
+
 
 # References
 
