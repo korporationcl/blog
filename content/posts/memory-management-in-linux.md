@@ -65,17 +65,44 @@ Imagine you were in the 1970s-1980s and processors like the `Intel 8080` only pr
 
 From the previous quote, it is referring to the Memory Management Unit / **MMU**. [Translation Lookaside Buffer](https://en.wikipedia.org/wiki/Translation_lookaside_buffer) or **TLB**, is a memory cache use to reduce the time taken to access a memory location and it stores the recent translations of virtual memory to physical memory.
 
-A process address space has its own virtual address space, which of course is mapped to physical memory by the operating system (main memory and swap, if exists). Another important definition to remember is a `page`. A page is a unit of memory, historically has been `4kb` or `8kb` but depends of the architecture, and its how the physical memory has been divided (also known as `page frames`). The selection of the size is defined when the kernel is built. On the latest Ubuntu `18.04.3` release the page size is still set to `4k`:
+A process address space has its own virtual address space, which of course is mapped to physical memory by the operating system (main memory and swap, if exists). Another important definition to remember is a `page`. A page is a unit of memory, historically has been `4kb` or `8kb` but depends of the architecture, and its how the physical memory has been divided (also known as `page frames`). The selection of the size is defined when the kernel is built. On the latest Ubuntu `19.10` release the page size is still set to `4k`:
 
 ```bash
 $root@testing:~# uname -r
-4.15.0-72-generic
+5.3.0-26-generic
 
 $root@testing:~# getconf PAGE_SIZE
 4096
 ```
 
+For now, consider the following example (From the awesome "Writing an OS in Rust"), running the same process twice in parallel:
 
+
+![allocating virtual memory](https://os.phil-opp.com/paging-introduction/segmentation-same-program-twice.svg)
+
+>Here the same program runs twice, but with different translation functions. The first instance has an segment offset of 100, so that its virtual addresses 0–150 are translated to the physical addresses 100–250. The second instance has offset 300, which translates its virtual addresses 0–150 to physical addresses 300–450. This allows both programs to run the same code and use the same virtual addresses without interfering with each other.
+
+# Segmentation
+
+One of the main tasks of the operating system is to isolate a process from each other, so in order to achieve this the system uses hardware capability to protect memory areas. The approach differs from hardware and the implementation on the OS. On `x86`, the two ways to protect memory are `segmentation` and `paging`. 
+
+The support for segmentation has been removed on `x86` for 64 bits and this concept applies mostly in legacy systems aka `32` bits.
+
+# Fragmentation
+
+
+
+This is more clear after reviewing the following case:
+
+![memory fragmentation](https://os.phil-opp.com/paging-introduction/segmentation-fragmentation.svg)
+
+>There is no way to map the third instance of the program to virtual memory without overlapping, even though there is more than enough free memory available. The problem is that we need continuous memory and can't use the small free chunks.
+>One way to combat this fragmentation is to pause execution, move the used parts of the memory closer together, update the translation, and then resume execution:
+
+![memory fragmentation fixed](https://os.phil-opp.com/paging-introduction/segmentation-fragmentation-compacted.svg)
+
+>The disadvantage of this defragmentation process is that is needs to copy large amounts of memory which decreases performance. It also needs to be done regularly before the memory becomes too fragmented. This makes performance unpredictable, since programs are paused at random times and might become unresponsive.
+>The fragmentation problem is one of the reasons that segmentation is no longer used by most systems. In fact, segmentation is not even supported in 64-bit mode on x86 anymore. Instead paging is used, which completely avoids the fragmentation problem.
 
 # References
 
@@ -84,3 +111,4 @@ $root@testing:~# getconf PAGE_SIZE
 3. [The Magic Garden explained](https://www.amazon.com/Magic-Garden-Explained-Internals-Release/dp/0130981389)
 4. [Linux: A portable operating system by Linus Torvals](https://www.cs.helsinki.fi/u/kutvonen/index_files/linus.pdf)
 5. https://www.thegeekstuff.com/2012/02/linux-memory-management/
+6. https://os.phil-opp.com/paging-introduction/
