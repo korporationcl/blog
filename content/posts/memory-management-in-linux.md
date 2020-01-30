@@ -1,7 +1,7 @@
 ---
 title: "Memory Management in Linux"
 date: 2020-01-02T17:20:51+01:00
-draft: true
+draft: false
 tags: ["linux", "kernel", "memory management", "cloud computing", "computer science"]
 ---
 
