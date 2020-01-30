@@ -47,10 +47,100 @@ but also, in The magic Garden explained[3], Chapter 3, it's been stated that:
 
 ## Physical Memory
 
-Physical memory is what we know as the RAM (Random Access Memory), and is found on the memory bank of your laptop or more commonly servers (if you are running infrastructure on the cloud same principle applies). Most of servers out there are NUMA (Non-Uniform memory access) but UMA used to be the rule. The main difference in UMA there is a single shared BUS that connects the memory controller with the CPU and the other components. Whereas in NUMA, each CPU has its own internal connection with the memory controller. To easily understand the difference see the following diagram:
+Physical memory is what we know as the **RAM** (Random Access Memory), and is found on the memory bank of your laptop or more commonly servers (if you are running infrastructure on the cloud same principle applies). Most of servers out there are NUMA (Non-Uniform memory access) but UMA used to be the rule. The main difference in UMA there is a single shared BUS that connects the memory controller with the CPU and the other components. Whereas in NUMA, each CPU has its own internal connection with the memory controller. To easily understand the difference see the following diagram:
 
 ![numa vs uma](https://3l4sbp4ao2771ln0f54chhvm-wpengine.netdna-ssl.com/wp-content/uploads/2018/04/NUMA-Architecture.png)
 
+Each memory bank is the kernel is known as a **Node** (in my case `node0`). In NUMA systems, and each processor can access a different node, which is known as the **distance** (this has a cost associated in terms of latency, since accessing the CPUs local node is faster than a remote node). Nodes are known inside the kernel as `type pg_data_t`.
+
+A node is divided in different **Zones** which represent different ranges of memory. On the `x86` the zones are:
+
+- ZONE_DMA (first 16MB)
+- ZONE_NORMAL (Between 16MB and 896MB, this is where many kernel operations happen and is the most critical zone)
+- ZONE_HIGHMEM (Between 896MB - END)
+
+**Zones** are declared in the [include/linux/mmzone.h](https://github.com/torvalds/linux/blob/master/include/linux/mmzone.h) file, they as declared as `struct zone`. checking my laptop I noticed the following:
+
+```lang=bash
+$ cat /proc/pagetypeinfo
+Page block order: 9
+Pages per block:  512
+
+Free pages count per migrate type at order       0      1      2      3      4      5      6      7      8      9     10 
+Node    0, zone      DMA, type    Unmovable      1      1      1      0      2      1      1      0      1      0      0 
+Node    0, zone      DMA, type      Movable      0      0      0      0      0      0      0      0      0      1      3 
+Node    0, zone      DMA, type  Reclaimable      0      0      0      0      0      0      0      0      0      0      0 
+Node    0, zone      DMA, type   HighAtomic      0      0      0      0      0      0      0      0      0      0      0 
+Node    0, zone      DMA, type          CMA      0      0      0      0      0      0      0      0      0      0      0 
+Node    0, zone      DMA, type      Isolate      0      0      0      0      0      0      0      0      0      0      0 
+Node    0, zone    DMA32, type    Unmovable    838    384     65     16      9      2      0      0      0      0      0 
+Node    0, zone    DMA32, type      Movable  26195  10502    648    146     20      4      0      1      0      0      0 
+Node    0, zone    DMA32, type  Reclaimable    506    657    590    404    188     82     20     13      2      1      0 
+Node    0, zone    DMA32, type   HighAtomic      0      0      0      0      0      0      0      0      0      0      0 
+Node    0, zone    DMA32, type          CMA      0      0      0      0      0      0      0      0      0      0      0 
+Node    0, zone    DMA32, type      Isolate      0      0      0      0      0      0      0      0      0      0      0 
+Node    0, zone   Normal, type    Unmovable    440    357    227     72     38      6      0      0      0      0      0 
+Node    0, zone   Normal, type      Movable  11803   2752    730     78     15     11      3      2      2      0      0 
+Node    0, zone   Normal, type  Reclaimable      0     38     33     16      1      0      0      0      0      0      0 
+Node    0, zone   Normal, type   HighAtomic      0      0      0      0      0      0      0      0      0      0      0 
+Node    0, zone   Normal, type          CMA      0      0      0      0      0      0      0      0      0      0      0 
+Node    0, zone   Normal, type      Isolate      0      0      0      0      0      0      0      0      0      0      0 
+
+Number of blocks type     Unmovable      Movable  Reclaimable   HighAtomic          CMA      Isolate 
+Node 0, zone      DMA            1            7            0            0            0            0 
+Node 0, zone    DMA32           25         1359          144            0            0            0 
+Node 0, zone   Normal          122         2039          155            0            0            0 
+```
+
+`DMA32` zone only exists under `x86_64` systems,  the `ZONE_HIGHMEM` is created only in 32 bits too.  The complete answer is found on the same source code actually:
+
+```lang=c
+enum zone_type {
+	/*
+	 * ZONE_DMA and ZONE_DMA32 are used when there are peripherals not able
+	 * to DMA to all of the addressable memory (ZONE_NORMAL).
+	 * On architectures where this area covers the whole 32 bit address
+	 * space ZONE_DMA32 is used. ZONE_DMA is left for the ones with smaller
+	 * DMA addressing constraints. This distinction is important as a 32bit
+	 * DMA mask is assumed when ZONE_DMA32 is defined. Some 64-bit
+	 * platforms may need both zones as they support peripherals with
+	 * different DMA addressing limitations.
+	 *
+	 * Some examples:
+	 *
+	 *  - i386 and x86_64 have a fixed 16M ZONE_DMA and ZONE_DMA32 for the
+	 *    rest of the lower 4G.
+	 *
+	 *  - arm only uses ZONE_DMA, the size, up to 4G, may vary depending on
+	 *    the specific device.
+	 *
+	 *  - arm64 has a fixed 1G ZONE_DMA and ZONE_DMA32 for the rest of the
+	 *    lower 4G.
+	 *
+	 *  - powerpc only uses ZONE_DMA, the size, up to 2G, may vary
+	 *    depending on the specific device.
+	 *
+	 *  - s390 uses ZONE_DMA fixed to the lower 2G.
+	 *
+	 *  - ia64 and riscv only use ZONE_DMA32.
+	 *
+	 *  - parisc uses neither.
+	 */
+
+...
+#ifdef CONFIG_HIGHMEM
+	/*
+	 * A memory area that is only addressable by the kernel through
+	 * mapping portions into its own address space. This is for example
+	 * used by i386 to allow the kernel to address the memory beyond
+	 * 900MB. The kernel will set up special mappings (page
+	 * table entries on i386) for each page that the kernel needs to
+	 * access.
+	 */
+```
+
+
+Each physical page in the system has a `page struct`, which is declared in the [include/linux/mm_types.h](https://github.com/torvalds/linux/blob/master/include/linux/mm_types.h) file and is probably the most important structure in regards of memory management.
 
 
 ## Virtual Memory
@@ -137,3 +227,4 @@ This is more clear after reviewing the following case:
 6. https://os.phil-opp.com/paging-introduction/
 7. https://www.bottomupcs.com/virtual_memory_linux.xhtml
 8. https://lwn.net/Articles/253361/
+9. https://www.kernel.org/doc/gorman/html/understand/understand005.html
