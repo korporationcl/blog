@@ -20,3 +20,9 @@ url = "https://github.com/korporationcl/"
 [[params.social]]
 icon = "linkedin"
 url = "https://www.linkedin.com/in/victorvargasb/"
+
+[frontmatter]
+date = ["date", "publishDate", "lastmo"]
+lastmod = ["lastmod", ":fileModTime", ":default"]
+publishDate = ["publishDate", "date"]
+expiryDate = ["expiryDate"]
