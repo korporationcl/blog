@@ -216,6 +216,18 @@ This is more clear after reviewing the following case:
 
 >In this example we have a page size of 50 bytes, which means that each of our memory regions is split across three pages. Each page is mapped to a frame individually, so a continuous virtual memory region can be mapped to **non-continuous physical frames**. This allows us to start the third instance of the program without performing any defragmentation before.
 
+As mentioned before, 32 bits architecture implement a two page level, while 64 bits implements a four levels, although this has been implemented since kernel version `2.6.11`. The current levels are:
+
+- **Page Global Directory**: Highest level in the hierarchy and includes addresses from the Upper Directory.
+- **Page Upper Directory**: Points to the addresses from the Middle Directory.
+- **Page Middle Directory**: Points to the addresses from Page Table
+- **Page Table**: Points to the physical addresses (page frame)
+
+On 32 bits with **no** `PAE` (Physical Address Extension), just two levels are available, otherwise it will use three (Upper and Middle are set with their fields to 0 bits, and are kept in the same order to make the code compatible for both 32/64 bits). In addition the number of page entries in those page tables are set to `1` and are mapped to the Page Global Directory.
+
+![4 level pages reference](https://miro.medium.com/max/727/0*HUN4J9f44iqk3iHD.png)
+
+**Each process** has it's own Global Page Directory and Page tables and when a `context switch` happens, Linux saves the current the value of the `cr3` register.
 
 # References
 
