@@ -20,7 +20,7 @@ On brendan's book[2], the introduction to Chapter 7 says:
 
 > System main memory stores application and kernel instructions, their working data, and file system caches. In many systems, the secondary storage for this data is the primary storage devices (disks), which operate orders of magnitude mode slowly. 
 
-But this doesn't actually give you the answer.. the actual reason is because the `CPU` needs to execute a set of instructions which are copied from a storage device (hard drive) to the main memory aka `RAM` and here the `fetch-decode-execute`cycle shows up. If you want to learn more about it watch this [video](https://www.youtube.com/watch?v=jFDMZpkUWCw) and follow-up with this [article](https://www.bbc.co.uk/bitesize/guides/z2342hv/revision/5). At this point you know why memory is needed. Before introducing the next topic I would like to quote what Linus[4] wrote on his thesis a while ago, in regards of the memory management process:
+the reason is because the `CPU` needs to execute a set of instructions which are copied from a storage device (hard drive) to the main memory aka `RAM` and here the `fetch-decode-execute`cycle shows up. If you want to learn more about it watch this [video](https://www.youtube.com/watch?v=jFDMZpkUWCw) and follow-up with this [article](https://www.bbc.co.uk/bitesize/guides/z2342hv/revision/5). At this point you know why memory is needed. Before introducing the next topic I would like to quote what Linus[4] wrote on his thesis a while ago, in regards of the memory management process:
 
 >Memory is one of the most fundamental resources in the system, and as such the performance of the memory management layer is critical to the system. Making memory management efficient is thus of primary importance: not only do the routines have to be fast, they have to be clever too, sharing physical pages aggressively in order to get the most out of a system.
 
@@ -32,7 +32,7 @@ As a reminder, back in the 90's, Linus starting working on the kernel on the **I
 
 >The original Linux was not only extremely PC-centric, it wallowed in features available on PC’s and was totally unconcerned with most portability issues other than at a user level. The original Intel 80386 architecture that Linux was written for is perhaps the example of current CISC design, and has high-level support for features other current CPU’s would not even dream about implementing (see for example [CG87]).
 
-Linus mentioned on his thesis that everything related to `memory management` belongs under the directory [mm/](https://github.com/torvalds/linux/tree/master/mm), as so:
+Linus mentioned on his thesis that everything related to `memory management` belongs under the directory [mm/](https://github.com/torvalds/linux/tree/master/mm), from the following paragraph:
 
 >The basic Linux kernel is directly organized around the primary services it provides: process handling, memory management, file system management, network access and the drivers for the hardware. These areas correspond to the kernel source directories kernel, mm, fs, net and drivers respectively. 
 
@@ -47,13 +47,13 @@ but also, in The magic Garden explained[3], Chapter 3, it's been stated that:
 
 ## Physical Memory
 
-Physical memory is what we know as the **RAM** (Random Access Memory), and is found on the memory bank of your laptop or more commonly servers (if you are running infrastructure on the cloud same principle applies). Most of servers out there are NUMA (Non-Uniform memory access) but UMA used to be the rule. The main difference in UMA there is a single shared BUS that connects the memory controller with the CPU and the other components. Whereas in NUMA, each CPU has its own internal connection with the memory controller. To easily understand the difference see the following diagram:
+Physical memory is what we know as **RAM** (Random Access Memory), and is found on the memory bank of your laptop or more commonly servers. Most of servers out there are NUMA (Non-Uniform memory access) at this point in time but UMA used to be the rule. The main difference in UMA there is a single shared BUS that connects the memory controller with the CPU and the other components. Whereas in NUMA, each CPU has its own internal connection with the memory controller. To easily understand the difference see the following diagram:
 
 ![numa vs uma](https://3l4sbp4ao2771ln0f54chhvm-wpengine.netdna-ssl.com/wp-content/uploads/2018/04/NUMA-Architecture.png)
 
-Each memory bank is the kernel is known as a **Node** (in my case `node0`). In NUMA systems, and each processor can access a different node, which is known as the **distance** (this has a cost associated in terms of latency, since accessing the CPUs local node is faster than a remote node). Nodes are known inside the kernel as `type pg_data_t`.
+Each memory bank inside the kernel is known as a **Node** (in my case `node0`). In NUMA systems, and each processor can access a different node, which is known as the **distance** (this has a cost associated in terms of latency, since accessing the CPUs local node is faster than a remote node). Nodes are known inside the kernel as `type pg_data_t`.
 
-A node is divided in different **Zones** which represent different ranges of memory. On the `x86` the zones are:
+A node is divided into different **Zones** which represent different ranges of memory. On the `x86` the zones are:
 
 - ZONE_DMA (first 16MB)
 - ZONE_NORMAL (Between 16MB and 896MB, this is where many kernel operations happen and is the most critical zone)
@@ -92,7 +92,7 @@ Node 0, zone    DMA32           25         1359          144            0       
 Node 0, zone   Normal          122         2039          155            0            0            0 
 ```
 
-`DMA32` zone only exists under `x86_64` systems,  the `ZONE_HIGHMEM` is created only in 32 bits too.  The complete answer is found on the same source code actually:
+`DMA32` zone only exists under `x86_64` systems,  the `ZONE_HIGHMEM` is created only in 32 bits.  The reason for it is found on the source code actually:
 
 ```lang=c
 enum zone_type {
@@ -184,6 +184,9 @@ The page table data structure then is composed as:
 >The CPU takes the index part of the virtual address corresponding to this directory and uses that index to pick the appropriate entry. This entry is the address of the next directory, which is indexed using the next part of the virtual address. This process continues until it reaches the level 1 directory, at which point the value of the directory entry is the high part of the physical address. The physical address is completed by adding the page offset bits from the virtual address. This process is called **page tree walking**. Some processors (like x86 and x86-64) perform this operation in hardware, others need assistance from the OS.
 
 Pages are commonly `4k` size as seen before, and each page table can have up to `512` entries,  each entry is `8b` (512 * 8 = 4096bytes or 4k - it fits exactly in one page), page tables are also stored in memory.
+
+It seems like recently in Kernel 5.5, after this [commit](https://git.kernel.org/linus/18ec1eaf58fbf2d9009a752a102a3d8e0d905a0f), 5 level paging is enabled by default.
+
 
 # Segmentation
 
