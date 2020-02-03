@@ -185,8 +185,9 @@ The page table data structure then is composed as:
 
 Pages are commonly `4k` size as seen before, and each page table can have up to `512` entries,  each entry is `8b` (512 * 8 = 4096bytes or 4k - it fits exactly in one page), page tables are also stored in memory.
 
-It seems like recently in Kernel 5.5, after this [commit](https://git.kernel.org/linus/18ec1eaf58fbf2d9009a752a102a3d8e0d905a0f), 5 level paging is enabled by default.
-
+{{% notice note %}}
+ Now in Kernel 5.5 and beyond, after this [commit](https://git.kernel.org/linus/18ec1eaf58fbf2d9009a752a102a3d8e0d905a0f), 5 level paging is enabled by default.
+{{% /notice %}}
 
 # Segmentation
 
