@@ -49,7 +49,7 @@ If you skipped all the boring introduction because you just want to know the num
 
 - [natives](http://github.com/addaleax/natives): Do stuff with Node.js’s native JavaScript modules.
 
-- [qs](): A querystring parsing and stringifying library with some added security.
+- [qs](http://github.com/ljharb/qs): A querystring parsing and stringifying library with some added security.
 
 - [readable-stream](http://github.com/nodejs/readable-stream): Node.js core streams for userland.
 
