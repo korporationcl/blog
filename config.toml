@@ -1,4 +1,5 @@
 baseURL = "https://www.korporation.cl/"
+DefaultContentLanguage = "en"
 languageCode = "en-us"
 title = "korporation"
 theme = "bare"
